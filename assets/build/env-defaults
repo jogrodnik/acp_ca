@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# User CA
+
+CA_USER="${CA_USER:-ca}"
+CA_HOME="${CA_HOME:-/home/ca}"
+
+
+# System CA data dir and runtime dir
+
+CA_DATA_DIR="${CA_HOME}"
+
+CA_RUNTIME_DIR="${CA_RUNTIME_DIR:-/etc/docker-ca}"
+CA_TEMPLATE_CNF="openssl_template_ca.cnf"
+
+# Universal fuctions configuration
+
+USERCONF_TEMPLATES_DIR="${CA_RUNTIME_DIR}"
+SYSCONF_TEMPLATES_DIR="${USERCONF_TEMPLATES_DIR}"
+USER="${CA_USER}"
+
+# Parameters of CA
+
+CA_ROOT_NAME="${CA_ROOT_NAME:-caroot}"
+CA_INTER_NAME="${CA_INTER_NAME:-caserver}"
+
+CA_DEFAULT_countryName="${CA_DEFAULT_countryName:-PL}"
+CA_DEFAULT_stateOrProvinceName="${CA_DEFAULT_stateOrProvinceName:-Pomorskie}"
+CA_DEFAULT_localityName="${CA_DEFAULT_localityName:-Gdynia}"
+CA_DEFAULT_organizationName="${CA_DEFAULT_organizationName:-Alibaba S.A.}"
+CA_DEFAULT_organizationalUnitName="${CA_DEFAULT_organizationalUnitName:-Alibaba S.A.}"
+CA_DEFAULT_commonName="${CA_DEFAULT_commonName:-Alibaba S.A. (%s) CA}"
+CA_DEFAULT_emailAddress="${CA_DEFAULT_emailAddress=jaroslaw.ogrodnik@asseco.pl}"
+
+
+CA_ROOT_NAME="${CA_ROOT_NAME:-caroot}"
+CA_INTER_NAME="${CA_INTER_NAME:-caserver}"
+

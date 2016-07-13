@@ -1,61 +1,7 @@
 #!/bin/bash
-exec_as_ca_user() {
-  if [[ $(whoami) == ${CA_USER} ]]; then
-    $@
-  else
-    sudo -HEu ${CA_USER} "$@"
-  fi
-}
 
-## Copies configuration template to the destination as the specified USER
-### Looks up for overrides in ${USERCONF_TEMPLATES_DIR} before using the defaults from ${SYSCONF_TEMPLATES_DIR}
-# $1: copy-as user
-# $2: source file
-# $3: destination location
-# $4: mode of destination
-install_template() {
-  local ownership=${1?missing argument}
-  local src=${2?missing argument}
-  local dest=${3?missing argument}
-  local mode=${4:-0644}
-
-  if [[ -f ${USERCONF_TEMPLATES_DIR}/${src} ]]; then
-      cp ${USERCONF_TEMPLATES_DIR}/${src} ${dest}
-  elif [[ -f ${SYSCONF_TEMPLATES_DIR}/${src} ]]; then
-       cp ${SYSCONF_TEMPLATES_DIR}/${src} ${dest}
-  fi
-  chmod ${mode} ${dest}
-  chown ${ownership}:${ownership} ${dest}
-}
-
-## Replace placeholders with values
-# $1: file with placeholders to replace
-# $x: placeholders to replace
-update_template() {
-  local file=${1?missing argument}
-  shift
-
-  [[ ! -f ${file} ]] && return 1
-
-  local variables=($@)
-  local usr=$(stat -c %U ${file})
-  local tmp_file=$(mktemp)
-  cp -a "${file}" ${tmp_file}
-
-  local variable
-  for variable in ${variables[@]}; do
-    # Keep the compatibilty: {{VAR}} => ${VAR}
-    sed -ri "s/[{]{2}$variable[}]{2}/\${$variable}/g" ${tmp_file}
-  done
-
-  # Replace placeholders
-  (
-    export ${variables[@]}
-    local IFS=":"; sudo -HEu ${usr} envsubst "${variables[*]/#/$}" < ${tmp_file} > ${file}
-  )
-  rm -f ${tmp_file}
-}
-
+source ${CA_RUNTIME_DIR}/env-defaults
+source ${CA_RUNTIME_DIR}/functions
 
 create_skel_dir() {
     #set -x
@@ -207,17 +153,5 @@ configure_skel_all() {
     bundle_chain_ca  ${CA_DATA_DIR}/${CA_INTER_NAME} ${CA_INTER_NAME} ${CA_DATA_DIR}/${CA_ROOT_NAME} ${CA_ROOT_NAME}
 
 }
-
-
-USERCONF_TEMPLATES_DIR="${CA_TEMPLATES_DIR:-/etc/docker-ca/templates}"
-CA_TEMPLATE_CNF="${CA_TEMPLATE_CNF:-openssl_template_ca.cnf}"
-
-CA_USER="${CA_USER:-ca}"
-
-CA_DATA_DIR="${CA_DATA_DIR:-/home/ca}"
-CA_ROOT_NAME="${CA_ROOT_NAME:-caroot}"
-CA_INTER_NAME="${CA_INTER_NAME:-caserver}"
-
-CA_ROOT_PASS="${CA_ROOT_PASS:-epromak123}"
 
 configure_skel_all

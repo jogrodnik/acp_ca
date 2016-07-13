@@ -9,7 +9,7 @@ create_skel_dir() {
     local caname=${2?missing argument}
     local capolicy=${3?missing argument}
 
-
+    [[ -f ${cadir} ]] && return 1
 
     mkdir -p  ${cadir}
     cd ${cadir}
@@ -44,9 +44,12 @@ create_skel_dir() {
 # $1: dir of root CA
 # $2: name of CA
 create_root_ca() {
-    set -x
+
     local cadir=${1?missing argument}
     local caname=${2?missing argument}
+
+    [[ -f ${cadir}/certs/${caname}.cert.pem ]] && return 1
+
     export CN=$(printf "${CA_DEFAULT_commonName}" "$caname")
     exec_as_ca_user \
         /usr/bin/openssl req \
@@ -60,7 +63,7 @@ create_root_ca() {
         -keyout ${cadir}/private/${caname}.key.pem \
         -out ${cadir}/certs/${caname}.cert.pem
      unset CN
-     set +x
+
 }
 
 
@@ -74,6 +77,7 @@ create_inter_ca() {
     local caname=${2?missing argument}
     local carootdir=${3?missing argument}
 
+    [[ -f ${cadir}/certs/${caname}.cert.pem ]] && return 2
 
     export CN=$(printf "${CA_DEFAULT_commonName}" "$caname")
     # Generate CSR intermediate CA
@@ -125,7 +129,7 @@ bundle_chain_ca() {
     # Build bundle
     exec_as_ca_user \
         cat ${cadir}/certs/${caname}.cert.pem \
-            {$carootdir}/${carootname}.cert.pem > ${cadir}/certs/ca-chain.cert.pem
+            ${carootdir}/certs/${carootname}.cert.pem > ${cadir}/certs/ca-chain.cert.pem
 
     chmod 444 ${cadir}/certs/ca-chain.cert.pem
 

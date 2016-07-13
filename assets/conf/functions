@@ -7,7 +7,6 @@ exec_as_ca_user() {
     sudo -HEu ${USER} "$@"
   fi
 }
-
 ## Copies configuration template to the destination as the specified USER
 ### Looks up for overrides in ${USERCONF_TEMPLATES_DIR} before using the defaults from ${SYSCONF_TEMPLATES_DIR}
 # $1: copy-as user

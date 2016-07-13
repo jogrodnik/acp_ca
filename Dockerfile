@@ -4,7 +4,7 @@
 #
 ######################################################
 FROM phusion/baseimage:0.9.18
-MAINTAINER Jarosław Ogrodnik <jaroslaw.ogrodnik@wp.pl>
+MAINTAINER Jaroslaw Ogrodnik <jaroslaw.ogrodnik@wp.pl>
 
 RUN apt-get update && apt-get install -y gettext
 
@@ -32,20 +32,19 @@ ENV CA_ROOT_NAME="caroot" \
     CA_DEFAULT_emailAddress="jaroslaw.ogrodnik@asseco.pl
 
 
-COPY assets/build/*.sh ${CA_RUNTIME_DIR}/
-RUN chmod 755 ${CA_RUNTIME_DIR}/*.sh
+COPY assets/conf/* ${CA_RUNTIME_DIR}/
+RUN  chmod 755 ${CA_RUNTIME_DIR}/*.sh
+RUN  chmod 644 ${CA_RUNTIME_DIR}/*
 
-COPY assets/templates/*.cnf  ${CA_RUNTIME_DIR}/
-RUN chmod 744 ${CA_RUNTIME_DIR}/*.cnf
+RUN mkdir -p /etc/my_init.d
+ADD assets/init/install.sh /etc/my_init.d/init_1.sh
+RUN  chmod 755 /etc/my_init.d/*.sh
 
-#RUN mkdir -p /etc/my_init.d
-#ADD assets/build/install.sh /etc/my_init.d/install.sh
-
-
-VOLUME [ "${CA_DATA_DIR}"  "${CA_CACHE_DIR}"  ]
+VOLUME [ "${CA_DATA_DIR}/"  "${CA_RUNTIME_DIR}"  ]
 
 # Clean up APT when done.
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+WORKDIR ${CA_RUNTIME_DIR}
 # Define default command.
 CMD ["/sbin/my_init", "/bin/bash"]

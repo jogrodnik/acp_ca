@@ -58,7 +58,7 @@ update_template() {
 
 
 create_skel_dir() {
-
+    #set -x
     local cadir=${1?missing argument}
     local caname=${2?missing argument}
     local capolicy=${3?missing argument}
@@ -90,7 +90,7 @@ create_skel_dir() {
                     CA_DEFAULT_organizationName \
                     CA_DEFAULT_organizationalUnitName \
                     CA_DEFAULT_emailAddress
-
+    #set +x
 }
 
 
@@ -99,24 +99,22 @@ create_skel_dir() {
 # $2: name of CA
 create_root_ca() {
     set -x
-
     local cadir=${1?missing argument}
     local caname=${2?missing argument}
-
-    local cnna=$(printf "${CA_DEFAULT_commonName}" "$caname")
-
+    export CN=$(printf "${CA_DEFAULT_commonName}" "$caname")
     exec_as_ca_user \
-      /usr/bin/openssl req \
-      -new \
-      -x509  \
-      -nodes \
-      -days 7300 \
-      -config ${cadir}/openssl.cnf \
-      -extensions v3_ca \
-      -subj "/C=${CA_DEFAULT_countryName}/ST=${CA_DEFAULT_stateOrProvinceName}/L=${CA_DEFAULT_localityName}/O=${CA_DEFAULT_organizationName}/OU=${CA_DEFAULT_organizationalUnitName}/CN=${cnna}" \
-      -keyout ${cadir}/private/${caname}.key.pem \
-      -out ${cadir}/certs/${caname}.cert.pem
-      set +x
+        /usr/bin/openssl req \
+        -config ${cadir}/openssl.cnf \
+        -x509  \
+        -batch \
+        -nodes \
+        -newkey rsa:4096 \
+        -days 7300 \
+        -extensions v3_ca \
+        -keyout ${cadir}/private/${caname}.key.pem \
+        -out ${cadir}/certs/${caname}.cert.pem
+     unset CN
+     set +x
 }
 
 
@@ -130,31 +128,30 @@ create_inter_ca() {
     local caname=${2?missing argument}
     local carootdir=${3?missing argument}
 
-    local cnna=$(printf "${CA_DEFAULT_commonName}" "$caname")
 
-    exec_as_ca_user \
-        /usr/bin/openssl genrsa -aes256 -out ${cadir}/private/${caname}.key.pem 4096
-
+    export CN=$(printf "${CA_DEFAULT_commonName}" "$caname")
     # Generate CSR intermediate CA
     exec_as_ca_user \
         /usr/bin/openssl req \
             -config ${cadir}/openssl.cnf \
-            -new \
-            -sha256 \
-            -subj "/C=${CA_DEFAULT_countryName}/ST=${CA_DEFAULT_stateOrProvinceName}/L=${CA_DEFAULT_localityName}/O=${CA_DEFAULT_organizationName}/OU=${CA_DEFAULT_organizationalUnitName}/CN=${cnna}/emailAddress=${CA_DEFAULT_emailAddress} " \
-            -key ${cadir}/private/${caname}.key.pem \
+            -batch \
+            -nodes \
+            -newkey rsa:2048 \
+            -keyout ${cadir}/private/${caname}.key.pem \
             -out ${cadir}/csr/${caname}.csr.pem
 
     # Generate CERT intermediate CA ( openssl.cnf root CA )
     exec_as_ca_user \
         /usr/bin/openssl ca \
             -config ${carootdir}/openssl.cnf \
+            -batch \
             -days 3650 \
             -notext \
             -md sha256 \
             -in ${cadir}/csr/${caname}.csr.pem \
             -out ${cadir}/certs/${caname}.cert.pem \
             -extensions v3_intermediate_ca
+    unset CN
 }
 
 ## Generate root CA certificate. CA's dir od
@@ -168,6 +165,7 @@ configure_skel_all() {
     passwd -d ${CA_USER}
 
     create_skel_dir ${CA_DATA_DIR}/${CA_ROOT_NAME}  ${CA_ROOT_NAME} policy_strict
+
     create_skel_dir ${CA_DATA_DIR}/${CA_INTER_NAME} ${CA_INTER_NAME} policy_loose
 
     chown -R ${CA_USER}:${CA_USER} ${CA_DATA_DIR}
@@ -178,7 +176,7 @@ configure_skel_all() {
 }
 
 
-USERCONF_TEMPLATES_DIR="${CA_TEMPLATES_DIR:-/etc/docker-ca}"
+USERCONF_TEMPLATES_DIR="${CA_TEMPLATES_DIR:-/etc/docker-ca/templates}"
 CA_TEMPLATE_CNF="${CA_TEMPLATE_CNF:-openssl_template_ca.cnf}"
 
 CA_USER="${CA_USER:-ca}"

@@ -16,11 +16,10 @@ verify_inter_ca() {
 
     # Verify
     exec_as_ca_user \
-        openssl x509 -noout -text \
-          -in ${cadir}/certs/${caname}.cert.pem
-    exec_as_ca_user \
         openssl verify -CAfile ${carootdir}/certs/${carootname}.cert.pem \
             ${cadir}/certs/${caname}.cert.pem
+
+
 
 }
 
@@ -31,16 +30,17 @@ bundle_chain_ca() {
     local carootdir=${3?missing argument}
     local carootname=${4?missing argument}
 
-
-     # Build bundle
-     exec_as_ca_user \
+    # Build bundle
+    exec_as_ca_user \
         cat ${cadir}/certs/${caname}.cert.pem \
             {$carootdir}/${carootname}.cert.pem > ${cadir}/certs/ca-chain.cert.pem
-    exec_as_ca_user \
+     exec_as_ca_user \
         chmod 444 ${cadir}/certs/ca-chain.cert.pem
+
+
 }
 
-}#
+
 set -x
 
 CA_ROOT_NAME="${CA_ROOT_NAME:-caroot}"

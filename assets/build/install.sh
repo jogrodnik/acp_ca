@@ -154,6 +154,37 @@ create_inter_ca() {
     unset CN
 }
 
+
+verify_inter_ca() {
+
+    local cadir=${1?missing argument}
+    local caname=${2?missing argument}
+    local carootdir=${3?missing argument}
+    local carootname=${4?missing argument}
+
+    # Verify
+    exec_as_ca_user \
+        openssl verify -CAfile ${carootdir}/certs/${carootname}.cert.pem \
+            ${cadir}/certs/${caname}.cert.pem
+
+}
+
+bundle_chain_ca() {
+
+    local cadir=${1?missing argument}
+    local caname=${2?missing argument}
+    local carootdir=${3?missing argument}
+    local carootname=${4?missing argument}
+
+    # Build bundle
+    exec_as_ca_user \
+        cat ${cadir}/certs/${caname}.cert.pem \
+            {$carootdir}/${carootname}.cert.pem > ${cadir}/certs/ca-chain.cert.pem
+
+    chmod 444 ${cadir}/certs/ca-chain.cert.pem
+
+}
+
 ## Generate root CA certificate. CA's dir od
 # $1: dir  in which is dir of ca $2
 # $2: name of ca.  The same name has a dir of ca
@@ -172,6 +203,8 @@ configure_skel_all() {
 
     create_root_ca ${CA_DATA_DIR}/${CA_ROOT_NAME}  ${CA_ROOT_NAME}
     create_inter_ca ${CA_DATA_DIR}/${CA_INTER_NAME} ${CA_INTER_NAME}  ${CA_DATA_DIR}/${CA_ROOT_NAME}
+    verify_inter_ca  ${CA_DATA_DIR}/${CA_INTER_NAME} ${CA_INTER_NAME} ${CA_DATA_DIR}/${CA_ROOT_NAME} ${CA_ROOT_NAME}
+    bundle_chain_ca  ${CA_DATA_DIR}/${CA_INTER_NAME} ${CA_INTER_NAME} ${CA_DATA_DIR}/${CA_ROOT_NAME} ${CA_ROOT_NAME}
 
 }
 

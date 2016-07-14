@@ -1,6 +1,5 @@
 #!/bin/bash
-#
-#
+
 docker run -h ca -it \
         --rm \
         --name ca \
@@ -13,6 +12,6 @@ docker run -h ca -it \
         --env CA_DEFAULT_emailAddress="jaroslaw.ogrodnik@asseco.pl" \
         --volume $(pwd)/ca:/home/ca \
         --volume $(pwd)/assets/conf:/etc/docker-ca \
-        my/ca2
+        my/ca
 
 :

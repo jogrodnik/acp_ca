@@ -1,2 +1,2 @@
 #!/bin/bash
-docker build -t my/ca2 .
+docker build -t my/ca .
